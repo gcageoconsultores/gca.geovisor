@@ -1,16 +1,24 @@
+/* Estilos generales */
 body, html {
   margin: 0;
   padding: 0;
   height: 100%;
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 header {
   background: #2c3e50;
   color: white;
-  padding: 10px 20px;
+  padding: 10px 0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.header-content {
   display: flex;
   align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
 .logo {
@@ -24,33 +32,77 @@ header {
   height: calc(100vh - 70px);
 }
 
+/* Barra de herramientas */
 .toolbar {
-  background: #ecf0f1;
-  padding: 10px;
+  background: #34495e;
+  padding: 10px 20px;
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
-.map-container {
+.toolbar button, .toolbar select {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.search-container {
+  display: flex;
+  flex-grow: 1;
+  max-width: 300px;
+}
+
+#search {
+  flex-grow: 1;
+  padding: 8px;
+  border-radius: 4px 0 0 4px;
+  border: none;
+}
+
+#search-btn {
+  border-radius: 0 4px 4px 0;
+  background: #3498db;
+  color: white;
+}
+
+#scale {
+  color: #ecf0f1;
+  margin-left: auto;
+  font-family: monospace;
+}
+
+/* Mapa y panel */
+.main-content {
   display: flex;
   flex: 1;
+  overflow: hidden;
 }
 
 #map {
-  width: 70%;
+  flex: 3;
   height: 100%;
 }
 
 .panel {
-  width: 30%;
-  padding: 10px;
+  flex: 1;
+  min-width: 300px;
+  background: #f8f9fa;
+  border-left: 1px solid #ddd;
   overflow-y: auto;
-  background: #f9f9f9;
+  padding: 15px;
 }
 
-.layer-control, .attributes {
+.panel-section {
   margin-bottom: 20px;
+}
+
+/* Tabla de atributos */
+#attributeTableContainer {
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 #attributeTable {
@@ -61,4 +113,47 @@ header {
 #attributeTable th, #attributeTable td {
   border: 1px solid #ddd;
   padding: 8px;
+  text-align: left;
+}
+
+#attributeTable th {
+  background: #34495e;
+  color: white;
+  position: sticky;
+  top: 0;
+}
+
+/* Controles de capa */
+.layer-control {
+  margin-bottom: 10px;
+  padding: 10px;
+  background: #ecf0f1;
+  border-radius: 4px;
+}
+
+.layer-control label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+/* Leyenda */
+.legend {
+  padding: 10px;
+  background: white;
+  border-radius: 4px;
+  margin-top: 10px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.legend-color {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  border: 1px solid #333;
 }
