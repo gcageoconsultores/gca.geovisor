@@ -1,100 +1,165 @@
 // Inicialización del mapa
-const map = new ol.Map({
-  target: 'map',
-  layers: [
-    new ol.layer.Tile({
-      source: new ol.source.OSM(),
-      title: 'OpenStreetMap'
-    })
-  ],
-  view: new ol.View({
-    center: ol.proj.fromLonLat([-74.0721, 4.7110]), // Bogotá, Colombia
-    zoom: 10
-  })
-});
+const map = L.map('map').setView([4.7110, -74.0721], 10); // Bogotá, Colombia
 
-// Capas cargadas por el usuario
-const vectorLayer = new ol.layer.Vector({
-  source: new ol.source.Vector(),
-  title: 'Capa Personalizada'
-});
-map.addLayer(vectorLayer);
+// Capa base OSM
+const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
 
-// Escala dinámica
-map.on('moveend', () => {
-  const scale = map.getView().getResolution();
-  document.getElementById('scale').textContent = `Escala: 1:${Math.round(scale)}`;
-});
+// Capas base alternativas
+const baseLayers = {
+  "OpenStreetMap": osmLayer,
+  "Satélite": L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'),
+  "Topográfico": L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png')
+};
+
+// Control de capas base
+L.control.layers(baseLayers, null, {position: 'topright'}).addTo(map);
+
+// Escala
+L.control.scale({position: 'bottomleft'}).addTo(map);
 
 // Geolocalización
 document.getElementById('geolocate').addEventListener('click', () => {
-  navigator.geolocation.getCurrentPosition(pos => {
-    const coords = ol.proj.fromLonLat([pos.coords.longitude, pos.coords.latitude]);
-    map.getView().setCenter(coords);
-  });
+  map.locate({setView: true, maxZoom: 15});
 });
 
-// Buscador (Nominatim API)
-document.getElementById('search').addEventListener('change', (e) => {
-  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${e.target.value}`)
-    .then(response => response.json())
-    .then(data => {
-      if (data.length > 0) {
-        const coords = ol.proj.fromLonLat([parseFloat(data[0].lon), parseFloat(data[0].lat)]);
-        map.getView().setCenter(coords);
-      }
-    });
+map.on('locationfound', (e) => {
+  L.marker(e.latlng).addTo(map)
+    .bindPopup("¡Estás aquí!").openPopup();
 });
 
-// Selector de mapa base
-document.getElementById('baseMap').addEventListener('change', (e) => {
-  const baseLayer = map.getLayers().item(0);
-  baseLayer.setSource(
-    e.target.value === 'satellite' 
-      ? new ol.source.XYZ({ url: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}' })
-      : new ol.source.OSM()
-  );
+// Buscador de direcciones
+const searchControl = new GeoSearch.GeoSearchControl({
+  provider: new GeoSearch.OpenStreetMapProvider(),
+  style: 'bar',
+  searchLabel: 'Buscar dirección...',
 });
+map.addControl(searchControl);
 
 // Carga de capas GeoJSON
 document.getElementById('layerUpload').addEventListener('change', (e) => {
   const file = e.target.files[0];
   const reader = new FileReader();
+  
   reader.onload = () => {
-    const features = new ol.format.GeoJSON().readFeatures(reader.result);
-    vectorLayer.getSource().addFeatures(features);
-    updateLegend();
-    updateAttributeTable();
+    const layer = L.geoJSON(JSON.parse(reader.result), {
+      onEachFeature: (feature, layer) => {
+        // Mostrar atributos al hacer clic
+        if (feature.properties) {
+          let popupContent = `<table>`;
+          for (const key in feature.properties) {
+            popupContent += `<tr><th>${key}</th><td>${feature.properties[key]}</td></tr>`;
+          }
+          popupContent += `</table>`;
+          layer.bindPopup(popupContent);
+        }
+      }
+    }).addTo(map);
+    
+    // Actualizar panel de capas
+    addLayerControls(layer, file.name.split('.')[0]);
+    updateAttributeTable(layer);
   };
+  
   reader.readAsText(file);
 });
 
-// Leyenda y atributos
-function updateLegend() {
-  const legendDiv = document.getElementById('legend');
-  legendDiv.innerHTML = '<h4>Leyenda</h4>';
-  // Implementar lógica según estilos de capa
-}
-
-function updateAttributeTable() {
-  const table = document.getElementById('attributeTable');
-  const features = vectorLayer.getSource().getFeatures();
-  if (features.length > 0) {
-    const headers = Object.keys(features[0].getProperties()).filter(prop => prop !== 'geometry');
-    table.innerHTML = `
-      <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
-      <tbody>${features.map(f => `<tr>${headers.map(h => `<td>${f.get(h)}</td>`).join('')}</tr>`).join('')}</tbody>
+// Añadir controles de capa al panel
+function addLayerControls(layer, layerName) {
+  const layerDiv = document.createElement('div');
+  layerDiv.className = 'layer-control';
+  layerDiv.innerHTML = `
+    <label>
+      <input type="checkbox" checked> ${layerName}
+    </label>
+    <div>
+      <label>Transparencia: 
+        <input type="range" min="0" max="100" value="100" class="opacity-slider">
+      </label>
+    </div>
+    <div class="legend"></div>
+  `;
+  
+  document.getElementById('layerControls').appendChild(layerDiv);
+  
+  // Control de visibilidad
+  layerDiv.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
+    if (e.target.checked) {
+      map.addLayer(layer);
+    } else {
+      map.removeLayer(layer);
+    }
+  });
+  
+  // Control de transparencia
+  layerDiv.querySelector('.opacity-slider').addEventListener('input', (e) => {
+    layer.setStyle({fillOpacity: e.target.value / 100, opacity: e.target.value / 100});
+  });
+  
+  // Generar leyenda (ejemplo simple)
+  if (layer.options.style) {
+    const legend = layerDiv.querySelector('.legend');
+    legend.innerHTML = '<strong>Leyenda:</strong>';
+    const legendItem = document.createElement('div');
+    legendItem.className = 'legend-item';
+    legendItem.innerHTML = `
+      <div class="legend-color" style="background:${layer.options.style.fillColor};"></div>
+      <span>${layerName}</span>
     `;
+    legend.appendChild(legendItem);
   }
 }
 
-// Transparencia (ejemplo con slider)
-const opacitySlider = document.createElement('input');
-opacitySlider.type = 'range';
-opacitySlider.min = 0;
-opacitySlider.max = 100;
-opacitySlider.value = 100;
-opacitySlider.addEventListener('input', () => {
-  vectorLayer.setOpacity(opacitySlider.value / 100);
+// Actualizar tabla de atributos
+function updateAttributeTable(layer) {
+  const table = document.getElementById('attributeTable');
+  const thead = table.querySelector('thead');
+  const tbody = table.querySelector('tbody');
+  
+  // Limpiar tabla
+  thead.innerHTML = '';
+  tbody.innerHTML = '';
+  
+  // Obtener propiedades del primer feature (si existe)
+  const features = layer.getLayers();
+  if (features.length > 0 && features[0].feature.properties) {
+    const properties = features[0].feature.properties;
+    const headers = Object.keys(properties);
+    
+    // Crear encabezados
+    thead.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
+    
+    // Llenar tabla (primeros 10 registros)
+    features.slice(0, 10).forEach(feature => {
+      const row = document.createElement('tr');
+      headers.forEach(header => {
+        row.innerHTML += `<td>${feature.feature.properties[header]}</td>`;
+      });
+      tbody.appendChild(row);
+    });
+  }
+}
+
+// Herramientas de dibujo
+const drawControl = new L.Control.Draw({
+  draw: {
+    polygon: true,
+    polyline: true,
+    rectangle: false,
+    circle: false,
+    marker: true,
+    circlemarker: false
+  },
+  edit: {
+    featureGroup: new L.FeatureGroup() // Se debe añadir al mapa después
+  }
 });
-document.querySelector('.layer-control').appendChild(opacitySlider);
+map.addControl(drawControl);
+
+// Manejar eventos de dibujo
+map.on('draw:created', (e) => {
+  const layer = e.layer;
+  // Aquí podrías enviar la nueva geometría a un servidor
+  map.addLayer(layer);
+});
