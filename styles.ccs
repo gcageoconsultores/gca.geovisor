@@ -1,0 +1,64 @@
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: Arial, sans-serif;
+}
+
+header {
+  background: #2c3e50;
+  color: white;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  height: 50px;
+  margin-right: 15px;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 70px);
+}
+
+.toolbar {
+  background: #ecf0f1;
+  padding: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.map-container {
+  display: flex;
+  flex: 1;
+}
+
+#map {
+  width: 70%;
+  height: 100%;
+}
+
+.panel {
+  width: 30%;
+  padding: 10px;
+  overflow-y: auto;
+  background: #f9f9f9;
+}
+
+.layer-control, .attributes {
+  margin-bottom: 20px;
+}
+
+#attributeTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#attributeTable th, #attributeTable td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}

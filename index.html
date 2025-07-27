@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Geovisor Avanzado - Empresa XYZ</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol/ol.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Encabezado con logo y título -->
+  <header>
+    <img src="logo_empresa.png" alt="Logo Empresa" class="logo">
+    <h1>Geovisor de Gestión Territorial</h1>
+  </header>
+
+  <!-- Contenedor principal -->
+  <div class="container">
+    <!-- Barra de herramientas -->
+    <div class="toolbar">
+      <button id="geolocate">📍 Geolocalización</button>
+      <input type="text" id="search" placeholder="Buscar dirección...">
+      <select id="baseMap">
+        <option value="osm">OpenStreetMap</option>
+        <option value="satellite">Satélite</option>
+      </select>
+      <span id="scale">Escala: 1:1000</span>
+    </div>
+
+    <!-- Mapa y paneles laterales -->
+    <div class="map-container">
+      <div id="map"></div>
+      <div class="panel">
+        <div class="layer-control">
+          <h3>Capas</h3>
+          <input type="file" id="layerUpload" accept=".geojson,.json">
+          <div id="legend"></div>
+          <div id="layerList"></div>
+        </div>
+        <div class="attributes">
+          <h3>Atributos</h3>
+          <table id="attributeTable">
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/ol/ol.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.0.0/dist/socket.io.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
